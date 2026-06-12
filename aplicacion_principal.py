@@ -4,7 +4,7 @@ import io
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.utils import get_column_letter
 
-st.set_page_config(page_title="Consolidador PIS", layout="centered")
+st.set_page_config(page_title="Nómina final PIS", layout="centered")
 
 if 'lista_archivos' not in st.session_state:
     st.session_state.lista_archivos = []
