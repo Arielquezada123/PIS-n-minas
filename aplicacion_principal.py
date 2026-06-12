@@ -6,17 +6,14 @@ from openpyxl.utils import get_column_letter
 
 st.set_page_config(page_title="Consolidador PIS", layout="centered")
 
-# Inicializar memorias
 if 'lista_archivos' not in st.session_state:
     st.session_state.lista_archivos = []
-# Esta variable controla el vaciado automático de la caja de subida
 if 'llave_subida' not in st.session_state:
     st.session_state.llave_subida = 0
 
 st.title("Generador Nómina final PIS")
 st.write("1. Sube los archivos excel.\n2. Usa las flechas para ordenarlos cronológicamente (Actividad 1 arriba, la más reciente abajo). \n3. El último archivo definirá la vigencia (retirado) y los datos más actualizados.")
 
-# Zona de carga con llave dinámica para forzar su limpieza
 archivos_nuevos = st.file_uploader(
     "Arrastra o selecciona las nóminas aquí (los archivos se moverán a la lista de abajo)", 
     type=['xlsx'], 
@@ -24,18 +21,14 @@ archivos_nuevos = st.file_uploader(
     key=f"uploader_{st.session_state.llave_subida}"
 )
 
-# Lógica de absorción y autolimpieza
 if archivos_nuevos:
     nombres_actuales = [f.name for f in st.session_state.lista_archivos]
     for archivo in archivos_nuevos:
         if archivo.name not in nombres_actuales:
             st.session_state.lista_archivos.append(archivo)
-    
-    # Al sumar 1 a la llave, Streamlit destruye la caja anterior y crea una vacía al instante
     st.session_state.llave_subida += 1
     st.rerun()
 
-# Panel interactivo de ordenamiento
 if st.session_state.lista_archivos:
     st.markdown("### Orden de procesamiento")
     
@@ -58,7 +51,6 @@ if st.session_state.lista_archivos:
 
 st.divider()
 
-# Botón principal de ejecución
 if st.button("Generar matriz", type="primary"):
     if not st.session_state.lista_archivos:
         st.warning("No hay archivos en la lista para procesar. Por favor sube al menos una nómina.")
