@@ -153,7 +153,11 @@ if st.button("Generar matriz", type="primary"):
                 if col_asist in matriz_consolidada.columns:
                     matriz_consolidada[col_asist] = matriz_consolidada[col_asist].astype('Int64')
                     
-            matriz_consolidada = matriz_consolidada.sort_values(by=['Primer Apellido', 'Nombres'], na_position='last')
+            for columna in matriz_consolidada.columns:
+                if columna not in etiquetas_actividades and columna != 'retirado':
+                    matriz_consolidada[columna] = matriz_consolidada[columna].apply(
+                        lambda valor: valor.strftime('%d/%m/%Y') if isinstance(valor, pd.Timestamp) else (str(valor) if pd.notna(valor) and str(valor).strip() != "nan" else "")
+                    )
             
             buffer_memoria = io.BytesIO()
             with pd.ExcelWriter(buffer_memoria, engine='openpyxl') as escritor:
