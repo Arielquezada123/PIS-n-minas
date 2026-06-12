@@ -4,34 +4,36 @@ import io
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.utils import get_column_letter
 
-# Configuración de la página
 st.set_page_config(page_title="Consolidador PIS", layout="centered")
 
-# Inicializar las memorias de la aplicación
+# Inicializar memorias
 if 'lista_archivos' not in st.session_state:
     st.session_state.lista_archivos = []
-if 'archivos_previos_caja' not in st.session_state:
-    st.session_state.archivos_previos_caja = []
+# Esta variable controla el vaciado automático de la caja de subida
+if 'llave_subida' not in st.session_state:
+    st.session_state.llave_subida = 0
 
 st.title("Generador Nómina final PIS")
 st.write("1. Sube los archivos excel.\n2. Usa las flechas para ordenarlos cronológicamente (Actividad 1 arriba, la más reciente abajo). \n3. El último archivo definirá la vigencia (retirado) y los datos más actualizados.")
 
-# Zona de carga de archivos
-archivos_nuevos = st.file_uploader("Arrastra o selecciona las nóminas aquí", type=['xlsx'], accept_multiple_files=True)
+# Zona de carga con llave dinámica para forzar su limpieza
+archivos_nuevos = st.file_uploader(
+    "Arrastra o selecciona las nóminas aquí (los archivos se moverán a la lista de abajo)", 
+    type=['xlsx'], 
+    accept_multiple_files=True,
+    key=f"uploader_{st.session_state.llave_subida}"
+)
 
-# Lógica corregida: Detectar solo archivos genuinamente nuevos en la caja
-nombres_previos = [f.name for f in st.session_state.archivos_previos_caja]
+# Lógica de absorción y autolimpieza
 if archivos_nuevos:
+    nombres_actuales = [f.name for f in st.session_state.lista_archivos]
     for archivo in archivos_nuevos:
-        # Evalúa si el archivo acaba de ser soltado por el usuario
-        if archivo.name not in nombres_previos:
-            # Valida que no exista ya en la lista de procesamiento para evitar duplicados exactos
-            nombres_actuales = [f.name for f in st.session_state.lista_archivos]
-            if archivo.name not in nombres_actuales:
-                st.session_state.lista_archivos.append(archivo)
-
-# Actualizar la memoria de la caja para el próximo ciclo
-st.session_state.archivos_previos_caja = archivos_nuevos if archivos_nuevos else []
+        if archivo.name not in nombres_actuales:
+            st.session_state.lista_archivos.append(archivo)
+    
+    # Al sumar 1 a la llave, Streamlit destruye la caja anterior y crea una vacía al instante
+    st.session_state.llave_subida += 1
+    st.rerun()
 
 # Panel interactivo de ordenamiento
 if st.session_state.lista_archivos:
@@ -42,11 +44,11 @@ if st.session_state.lista_archivos:
         
         col_texto.write(f"**{i+1}.** {archivo.name}")
         
-        if col_arriba.button("▲", key=f"up_{i}", disabled=(i == 0)):
+        if col_arriba.button("⬆", key=f"up_{i}", disabled=(i == 0)):
             st.session_state.lista_archivos[i], st.session_state.lista_archivos[i-1] = st.session_state.lista_archivos[i-1], st.session_state.lista_archivos[i]
             st.rerun()
             
-        if col_abajo.button("▼", key=f"down_{i}", disabled=(i == len(st.session_state.lista_archivos) - 1)):
+        if col_abajo.button("⬇", key=f"down_{i}", disabled=(i == len(st.session_state.lista_archivos) - 1)):
             st.session_state.lista_archivos[i], st.session_state.lista_archivos[i+1] = st.session_state.lista_archivos[i+1], st.session_state.lista_archivos[i]
             st.rerun()
             
@@ -78,7 +80,6 @@ if st.button("Generar matriz", type="primary"):
         ruts_ultima_nomina = set()
         total_archivos = len(st.session_state.lista_archivos)
         
-        # Iterar sobre la lista ordenada por el usuario
         for numero_actividad, archivo_en_memoria in enumerate(st.session_state.lista_archivos, start=1):
             datos_crudos = pd.read_excel(archivo_en_memoria, header=None)
             
@@ -148,7 +149,7 @@ if st.button("Generar matriz", type="primary"):
                 
         lista_final = list(datos_maestros.values())
         if not lista_final:
-            st.error("No se extrajeron datos válidos. revisa la estructura de los archivos.")
+            st.error("No se extrajeron datos válidos. Revisa la estructura de los archivos.")
         else:
             matriz_consolidada = pd.DataFrame(lista_final)
             orden_columnas = columnas_objetivo + ['retirado'] + etiquetas_actividades
@@ -162,7 +163,6 @@ if st.button("Generar matriz", type="primary"):
                     
             matriz_consolidada = matriz_consolidada.sort_values(by=['Primer Apellido', 'Nombres'], na_position='last')
             
-            # Exportación a formato excel en la memoria del servidor
             buffer_memoria = io.BytesIO()
             with pd.ExcelWriter(buffer_memoria, engine='openpyxl') as escritor:
                 matriz_consolidada.to_excel(escritor, index=False, sheet_name='Nómina Consolidada')
@@ -187,7 +187,7 @@ if st.button("Generar matriz", type="primary"):
                     letra_col = get_column_letter(columna[0].column)
                     hoja.column_dimensions[letra_col].width = max(largo_maximo + 3, 12)
             
-            st.success("Datos unificados")
+            st.success("Datos unificados correctamente.")
             
             st.write("Vista previa de la matriz:")
             st.dataframe(matriz_consolidada)
