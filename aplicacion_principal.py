@@ -42,11 +42,11 @@ if st.session_state.lista_archivos:
         
         col_texto.write(f"**{i+1}.** {archivo.name}")
         
-        if col_arriba.button("⬆", key=f"up_{i}", disabled=(i == 0)):
+        if col_arriba.button("⭡", key=f"up_{i}", disabled=(i == 0)):
             st.session_state.lista_archivos[i], st.session_state.lista_archivos[i-1] = st.session_state.lista_archivos[i-1], st.session_state.lista_archivos[i]
             st.rerun()
             
-        if col_abajo.button("⬇", key=f"down_{i}", disabled=(i == len(st.session_state.lista_archivos) - 1)):
+        if col_abajo.button("⭣", key=f"down_{i}", disabled=(i == len(st.session_state.lista_archivos) - 1)):
             st.session_state.lista_archivos[i], st.session_state.lista_archivos[i+1] = st.session_state.lista_archivos[i+1], st.session_state.lista_archivos[i]
             st.rerun()
             
