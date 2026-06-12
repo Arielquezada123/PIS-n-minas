@@ -102,7 +102,7 @@ if st.button("Generar matriz", type="primary"):
             
             tiene_control_asistencia = False
             columna_asistencia_real = None
-            for palabra_clave in ['FIRMA', 'ASISTENCIA']:
+            for palabra_clave in ['FIRMA', 'ASISTENCIA', 'ASISTENCIAS', 'CONTROL ASISTENCIA', 'FIRMAS', 'REGISTRO ASISTENCIA', 'REGISTRO DE ASISTENCIA', 'REGISTRO DE FIRMA', 'REGISTRO DE FIRMAS']:
                 if palabra_clave in columnas_actuales:
                     tiene_control_asistencia = True
                     columna_asistencia_real = columnas_actuales[palabra_clave]
