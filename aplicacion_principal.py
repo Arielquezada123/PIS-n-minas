@@ -11,8 +11,8 @@ st.set_page_config(page_title="Consolidador PIS", layout="centered")
 if 'lista_archivos' not in st.session_state:
     st.session_state.lista_archivos = []
 
-st.title("Consolidador de nóminas de integración social")
-st.write("1. Sube los archivos excel.\n2. Usa las flechas para ordenarlos cronológicamente (actividad 1 arriba, la más reciente abajo).")
+st.title("Generador Nómina final PIS")
+st.write("1. Sube los archivos excel.\n2. Usa las flechas para ordenarlos cronológicamente (Nómina 1 arriba, la más reciente abajo). \n3 EI último archivo definirá la vigencia (retirado) y los datos más actualizados.")
 
 # Zona de carga de archivos
 archivos_nuevos = st.file_uploader("Arrastra o selecciona las nóminas aquí", type=['xlsx'], accept_multiple_files=True)
@@ -52,7 +52,7 @@ if st.session_state.lista_archivos:
 st.divider()
 
 # Botón principal de ejecución
-if st.button("Generar matriz consolidada", type="primary"):
+if st.button("Generar matriz", type="primary"):
     if not st.session_state.lista_archivos:
         st.warning("No hay archivos en la lista para procesar. Por favor sube al menos una nómina.")
     else:
@@ -182,7 +182,7 @@ if st.button("Generar matriz consolidada", type="primary"):
                     letra_col = get_column_letter(columna[0].column)
                     hoja.column_dimensions[letra_col].width = max(largo_maximo + 3, 12)
             
-            st.success("Consolidación finalizada exitosamente.")
+            st.success("Unificación de datos realizada.")
             
             st.write("Vista previa de la matriz:")
             st.dataframe(matriz_consolidada)
