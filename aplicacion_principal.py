@@ -7,45 +7,50 @@ from openpyxl.utils import get_column_letter
 # Configuración de la página
 st.set_page_config(page_title="Consolidador PIS", layout="centered")
 
-# Inicializar la memoria de la aplicación para mantener los archivos y su orden
+# Inicializar las memorias de la aplicación
 if 'lista_archivos' not in st.session_state:
     st.session_state.lista_archivos = []
+if 'archivos_previos_caja' not in st.session_state:
+    st.session_state.archivos_previos_caja = []
 
 st.title("Generador Nómina final PIS")
-st.write("1. Sube los archivos excel.\n2. Usa las flechas para ordenarlos cronológicamente (Actividad 1 arriba, la más reciente abajo). \n3. EI último archivo definirá la vigencia (retirado) y los datos más actualizados.")
+st.write("1. Sube los archivos excel.\n2. Usa las flechas para ordenarlos cronológicamente (Actividad 1 arriba, la más reciente abajo). \n3. El último archivo definirá la vigencia (retirado) y los datos más actualizados.")
 
 # Zona de carga de archivos
 archivos_nuevos = st.file_uploader("Arrastra o selecciona las nóminas aquí", type=['xlsx'], accept_multiple_files=True)
 
-# Lógica para agregar archivos nuevos sin duplicar los que ya están en la lista
+# Lógica corregida: Detectar solo archivos genuinamente nuevos en la caja
+nombres_previos = [f.name for f in st.session_state.archivos_previos_caja]
 if archivos_nuevos:
-    nombres_guardados = [f.name for f in st.session_state.lista_archivos]
     for archivo in archivos_nuevos:
-        if archivo.name not in nombres_guardados:
-            st.session_state.lista_archivos.append(archivo)
+        # Evalúa si el archivo acaba de ser soltado por el usuario
+        if archivo.name not in nombres_previos:
+            # Valida que no exista ya en la lista de procesamiento para evitar duplicados exactos
+            nombres_actuales = [f.name for f in st.session_state.lista_archivos]
+            if archivo.name not in nombres_actuales:
+                st.session_state.lista_archivos.append(archivo)
 
-# Panel interactivo de ordenamiento (Replica visual de la app de escritorio)
+# Actualizar la memoria de la caja para el próximo ciclo
+st.session_state.archivos_previos_caja = archivos_nuevos if archivos_nuevos else []
+
+# Panel interactivo de ordenamiento
 if st.session_state.lista_archivos:
     st.markdown("### Orden de procesamiento")
     
     for i, archivo in enumerate(st.session_state.lista_archivos):
-        # Crear columnas para el texto y los botones
         col_texto, col_arriba, col_abajo, col_eliminar = st.columns([6, 1, 1, 1])
         
         col_texto.write(f"**{i+1}.** {archivo.name}")
         
-        # Botón para subir el archivo en la lista
-        if col_arriba.button("⬆️", key=f"up_{i}", disabled=(i == 0)):
+        if col_arriba.button("⬆", key=f"up_{i}", disabled=(i == 0)):
             st.session_state.lista_archivos[i], st.session_state.lista_archivos[i-1] = st.session_state.lista_archivos[i-1], st.session_state.lista_archivos[i]
             st.rerun()
             
-        # Botón para bajar el archivo en la lista
-        if col_abajo.button("⬇️", key=f"down_{i}", disabled=(i == len(st.session_state.lista_archivos) - 1)):
+        if col_abajo.button("⬇", key=f"down_{i}", disabled=(i == len(st.session_state.lista_archivos) - 1)):
             st.session_state.lista_archivos[i], st.session_state.lista_archivos[i+1] = st.session_state.lista_archivos[i+1], st.session_state.lista_archivos[i]
             st.rerun()
             
-        # Botón para quitar el archivo
-        if col_eliminar.button("❌", key=f"del_{i}"):
+        if col_eliminar.button("✕", key=f"del_{i}"):
             st.session_state.lista_archivos.pop(i)
             st.rerun()
 
