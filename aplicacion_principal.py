@@ -187,7 +187,7 @@ if st.button("Generar matriz", type="primary"):
                     letra_col = get_column_letter(columna[0].column)
                     hoja.column_dimensions[letra_col].width = max(largo_maximo + 3, 12)
             
-            st.success("Datos unificados correctamente.")
+            st.success("Datos unificados.")
             
             st.write("Vista previa de la matriz:")
             st.dataframe(matriz_consolidada)
