@@ -12,7 +12,7 @@ if 'lista_archivos' not in st.session_state:
     st.session_state.lista_archivos = []
 
 st.title("Generador Nómina final PIS")
-st.write("1. Sube los archivos excel.\n2. Usa las flechas para ordenarlos cronológicamente (Nómina 1 arriba, la más reciente abajo). \n3 EI último archivo definirá la vigencia (retirado) y los datos más actualizados.")
+st.write("1. Sube los archivos excel.\n2. Usa las flechas para ordenarlos cronológicamente (Actividad 1 arriba, la más reciente abajo). \n3. EI último archivo definirá la vigencia (retirado) y los datos más actualizados.")
 
 # Zona de carga de archivos
 archivos_nuevos = st.file_uploader("Arrastra o selecciona las nóminas aquí", type=['xlsx'], accept_multiple_files=True)
@@ -182,7 +182,7 @@ if st.button("Generar matriz", type="primary"):
                     letra_col = get_column_letter(columna[0].column)
                     hoja.column_dimensions[letra_col].width = max(largo_maximo + 3, 12)
             
-            st.success("Unificación de datos realizada.")
+            st.success("Datos unificados")
             
             st.write("Vista previa de la matriz:")
             st.dataframe(matriz_consolidada)
