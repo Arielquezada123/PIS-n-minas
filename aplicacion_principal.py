@@ -4,19 +4,19 @@ import io
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.utils import get_column_letter
 
-# Configuración de la página
 st.set_page_config(page_title="Consolidador PIS", layout="centered")
 
 # Inicializar memorias
 if 'lista_archivos' not in st.session_state:
     st.session_state.lista_archivos = []
+# Esta variable controla el vaciado automático de la caja de subida
 if 'llave_subida' not in st.session_state:
     st.session_state.llave_subida = 0
 
 st.title("Generador Nómina final PIS")
-st.write("1. Sube los archivos excel.\n2. Ordena las etiquetas en el recuadro inferior (Actividad 1 primero, la más reciente al final).\n3. El último archivo definirá la vigencia (retirado) y los datos más actualizados.")
+st.write("1. Sube los archivos excel.\n2. Usa las flechas para ordenarlos cronológicamente (Actividad 1 arriba, la más reciente abajo). \n3. El último archivo definirá la vigencia (retirado) y los datos más actualizados.")
 
-# Zona de carga con autolimpieza
+# Zona de carga con llave dinámica para forzar su limpieza
 archivos_nuevos = st.file_uploader(
     "Arrastra o selecciona las nóminas aquí (los archivos se moverán a la lista de abajo)", 
     type=['xlsx'], 
@@ -24,34 +24,37 @@ archivos_nuevos = st.file_uploader(
     key=f"uploader_{st.session_state.llave_subida}"
 )
 
+# Lógica de absorción y autolimpieza
 if archivos_nuevos:
     nombres_actuales = [f.name for f in st.session_state.lista_archivos]
     for archivo in archivos_nuevos:
         if archivo.name not in nombres_actuales:
             st.session_state.lista_archivos.append(archivo)
     
+    # Al sumar 1 a la llave, Streamlit destruye la caja anterior y crea una vacía al instante
     st.session_state.llave_subida += 1
     st.rerun()
 
-# Panel interactivo de ordenamiento optimizado
+# Panel interactivo de ordenamiento
 if st.session_state.lista_archivos:
     st.markdown("### Orden de procesamiento")
     
-    # Diccionario para buscar rápidamente el objeto archivo por su nombre
-    mapa_archivos = {f.name: f for f in st.session_state.lista_archivos}
-    nombres_disponibles = list(mapa_archivos.keys())
-    
-    # Selector múltiple que actúa como organizador cronológico y eliminador
-    nombres_ordenados = st.multiselect(
-        "Para cambiar el orden, bórralos y vuelve a seleccionarlos secuencialmente:",
-        options=nombres_disponibles,
-        default=nombres_disponibles
-    )
-    
-    # Actualizar la lista maestra en tiempo real si el usuario quita o reordena elementos
-    if nombres_ordenados != nombres_disponibles:
-        st.session_state.lista_archivos = [mapa_archivos[nombre] for nombre in nombres_ordenados]
-        st.rerun()
+    for i, archivo in enumerate(st.session_state.lista_archivos):
+        col_texto, col_arriba, col_abajo, col_eliminar = st.columns([6, 1, 1, 1])
+        
+        col_texto.write(f"**{i+1}.** {archivo.name}")
+        
+        if col_arriba.button("⬆", key=f"up_{i}", disabled=(i == 0)):
+            st.session_state.lista_archivos[i], st.session_state.lista_archivos[i-1] = st.session_state.lista_archivos[i-1], st.session_state.lista_archivos[i]
+            st.rerun()
+            
+        if col_abajo.button("⬇", key=f"down_{i}", disabled=(i == len(st.session_state.lista_archivos) - 1)):
+            st.session_state.lista_archivos[i], st.session_state.lista_archivos[i+1] = st.session_state.lista_archivos[i+1], st.session_state.lista_archivos[i]
+            st.rerun()
+            
+        if col_eliminar.button("✕", key=f"del_{i}"):
+            st.session_state.lista_archivos.pop(i)
+            st.rerun()
 
 st.divider()
 
@@ -184,7 +187,7 @@ if st.button("Generar matriz", type="primary"):
                     letra_col = get_column_letter(columna[0].column)
                     hoja.column_dimensions[letra_col].width = max(largo_maximo + 3, 12)
             
-            st.success("Datos unificados correctamente")
+            st.success("Datos unificados correctamente.")
             
             st.write("Vista previa de la matriz:")
             st.dataframe(matriz_consolidada)
